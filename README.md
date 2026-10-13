@@ -110,6 +110,16 @@ python scripts/probe_model.py     # 依次验证 /models、纯对话、function 
   并在远程关阀失败后自行改派机械臂；最终三路探测器回落至 2.5 / 10.0 / 0.0 ppm，机器人现场复测 0 ppm，
   事故报告由模型自主撰写（含根因分析与 6 条整改建议）。
   证据：`outputs/traces/task-20261013-231655.json`、`outputs/reports/report-20261013-231912.md`
+- **演示视频（自动生成）**：`outputs/video/演示视频-安巡-实验室安全应急处置.mp4`
+  （2 分 09 秒，1600×900，H.264，1.6 MB）。由 `scripts/record_demo.js` 驱动系统 Edge 实录，
+  全程 Agnes 模型决策、**无降级**，画面叠加中文字幕条与片头：
+
+```bash
+npm i playwright-core @ffmpeg-installer/ffmpeg     # 仅需一次
+python run.py web                                  # 先起大屏
+node scripts/record_demo.js --mode builtin         # 真机录制；--mode mock 为离线快版
+```
+
 - `python run.py mcp --selftest`：MCP 协议 `initialize` / `tools/list` / `tools/call` 自检通过
 - 端到端断言：阀门关闭、排风 100%、人员疏散、源点浓度降至安全阈值以下、事故报告生成 —— 全部 PASS
 
