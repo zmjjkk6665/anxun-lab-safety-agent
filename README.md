@@ -3,6 +3,9 @@
 > 基于 **Agnes Harness（AGH）** 的化学实验室可燃气体泄漏应急处置系统
 > 2026 江苏省「AI + 科学与工程」创新实践黑客松参赛作品
 
+- GitHub：https://github.com/zmjjkk6665/anxun-lab-safety-agent
+- 参赛信息：本科生组 / 参赛编号 U126 / 队伍「大肥鱼脚香香」/ 队长 李家杰
+
 Agent 在数字孪生实验室中完成 **感知 → 确认 → 切断 → 控制 → 复核 → 报告** 的完整闭环：
 气体探测器报警后，交叉验证摄像机画面、调度巡检机器人现场复测、远程关阀失败时改派机械臂手动关阀、
 启动排风与疏散、持续观测浓度直至达标，最后自动生成事故报告。
@@ -87,7 +90,7 @@ python run.py cli --mode builtin
 
 ## 五、验证记录
 
-- `python run.py cli --mode mock`：12 步执行完成，状态 `completed`，轨迹与报告落盘 `outputs/`
+- `python run.py cli --mode mock`：13 步执行完成，状态 `completed`，轨迹与报告落盘 `outputs/`
 - `python run.py mcp --selftest`：MCP 协议 `initialize` / `tools/list` / `tools/call` 自检通过
 - 端到端断言：阀门关闭、排风 100%、人员疏散、源点浓度降至安全阈值以下、事故报告生成 —— 全部 PASS
 
