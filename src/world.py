@@ -312,11 +312,12 @@ class LabWorld:
                     "text": "%s汇流排密封失效，发生泄漏（剧本注入）" % self.chemical,
                 })
 
-            if self.leak_active and self.valve.state.get("open", True):
-                self.field += self.leak_rate * dt
-            else:
-                decay = 20.0 * (1.0 + self.vent.state["level"] / 40.0)
-                self.field = max(0.0, self.field - decay * dt)
+            # 质量守恒式浓度演化：泄漏源项 - 一阶通风稀释 - 绝对沉降。
+            # 泄漏期间同样参与衰减，因此浓度存在稳态上限，不会随演练时长无限累积。
+            emitting = self.leak_active and self.valve.state.get("open", True)
+            source = self.leak_rate if emitting else 0.0
+            vent_k = 0.05 + 0.0012 * self.vent.state["level"]   # 1/s：自然渗透 + 机械排风
+            self.field = max(0.0, self.field + (source - vent_k * self.field - 20.0) * dt)
 
             if self.field >= self.thresholds["danger_ppm"] * 1.6 and not self.ignition:
                 self.ignition = True

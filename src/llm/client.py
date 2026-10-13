@@ -5,8 +5,12 @@
 """
 
 import json
+import time
 import urllib.error
 import urllib.request
+
+# 免费/低配额网关常见：429 限流、5xx 抖动，均按退避重试处理
+RETRY_STATUS = (429, 500, 502, 503, 504)
 
 
 class LLMError(RuntimeError):
@@ -19,10 +23,14 @@ class AgnesClient:
     def __init__(self, cfg):
         llm = cfg["llm"]
         self.api_key = llm.get("api_key") or ""
-        self.base_url = (llm.get("base_url") or "https://apihub.agnes-ai.com/v1").rstrip("/")
+        self.base_url = (llm.get("base_url") or "https://api.agnes-ai.cn/v1").rstrip("/")
         self.model = llm.get("model") or "agnes-3.0-flash"
         self.temperature = llm.get("temperature", 0.2)
         self.timeout = llm.get("timeout_sec", 60)
+        self.max_retries = int(llm.get("max_retries", 4))
+        self.retry_base_sec = float(llm.get("retry_base_sec", 3.0))
+        self.min_interval_sec = float(llm.get("min_interval_sec", 1.5))
+        self._last_call_at = 0.0
 
     def available(self):
         return bool(self.api_key)
@@ -47,13 +55,42 @@ class AgnesClient:
             },
             method="POST",
         )
-        try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except urllib.error.HTTPError as exc:
-            raise LLMError("模型服务返回 %s: %s" % (exc.code, exc.read().decode("utf-8", "ignore")[:300]))
-        except Exception as exc:
-            raise LLMError("模型服务调用失败: %s" % exc)
+        last_error = None
+        for attempt in range(self.max_retries + 1):
+            self._pace()
+            try:
+                with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except urllib.error.HTTPError as exc:
+                body = exc.read().decode("utf-8", "ignore")
+                last_error = "模型服务返回 %s: %s" % (exc.code, body[:200])
+                if exc.code in RETRY_STATUS and attempt < self.max_retries:
+                    time.sleep(self._backoff(exc, attempt))
+                    continue
+                raise LLMError(last_error)
+            except Exception as exc:
+                last_error = "模型服务调用失败: %s" % exc
+                if attempt < self.max_retries:
+                    time.sleep(self._backoff(None, attempt))
+                    continue
+                raise LLMError(last_error)
+        raise LLMError(last_error or "模型服务调用失败")
+
+    def _pace(self):
+        """两次请求之间留最小间隔，降低触发免费额度限流的概率。"""
+        gap = time.time() - self._last_call_at
+        if gap < self.min_interval_sec:
+            time.sleep(self.min_interval_sec - gap)
+        self._last_call_at = time.time()
+
+    def _backoff(self, exc, attempt):
+        retry_after = 0.0
+        if exc is not None:
+            try:
+                retry_after = float(exc.headers.get("Retry-After") or 0)
+            except (ValueError, TypeError, AttributeError):
+                retry_after = 0.0
+        return max(retry_after, self.retry_base_sec * (2 ** attempt))
 
 
 def extract_tool_call(response):

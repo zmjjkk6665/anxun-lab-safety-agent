@@ -65,7 +65,7 @@ AGH 与内置通道共用同一份模型配置（OpenAI 兼容协议）：
 | 环境变量 | 说明 | 默认值 |
 |---|---|---|
 | `AGNES_API_KEY` | 组委会下发的模型 Key | 空 |
-| `AGNES_BASE_URL` | 模型服务地址 | `https://apihub.agnes-ai.com/v1` |
+| `AGNES_BASE_URL` | 模型服务地址 | `https://api.agnes-ai.cn/v1` |
 | `AGNES_MODEL` | 模型名 | `agnes-3.0-flash` |
 | `LABGUARD_MODE` | 运行模式 | `auto` |
 | `LABGUARD_SPEED` | 仿真倍速（演示/测试用） | `2.0` |

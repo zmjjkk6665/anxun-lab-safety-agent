@@ -58,6 +58,8 @@ class AgentLoop:
         # 模型不可用（未配 Key / 鉴权失败 / 网络不可达）时自动降级，保证演示不中断
         self.llm_down = False
         self.llm_error = None
+        # 网关要求 tool 消息必须回填 tool_call_id，否则报 missing field `tool_call_id`
+        self._pending_call_id = None
 
     def _fallback(self, reason, last_result=None):
         if not self.llm_down:
@@ -78,12 +80,25 @@ class AgentLoop:
             response = self.llm.chat(self.messages, self.tools.schemas())
             call = extract_tool_call(response)
             msg = response["choices"][0]["message"]
+            tool_calls = msg.get("tool_calls")
+            self._pending_call_id = (tool_calls[0].get("id") if tool_calls else None)
             self.messages.append({
                 "role": "assistant",
                 "content": msg.get("content") or "",
-                "tool_calls": msg.get("tool_calls"),
+                "tool_calls": tool_calls,
             })
             if not call.get("name"):
+                # 若网关返回了 tool_calls 却没解析出工具名，先回填一条工具回执，
+                # 避免「 assistant(tool_calls) 后面直接跟 user 」这种非法序列
+                if tool_calls:
+                    self.messages.append({
+                        "role": "tool",
+                        "tool_call_id": self._pending_call_id,
+                        "name": (tool_calls[0].get("function") or {}).get("name") or "unknown",
+                        "content": _dump({"ok": False, "error": "工具未执行，请改用 JSON 输出工具名与参数"}),
+                    })
+                    self._pending_call_id = None
+
                 # 模型未给出工具调用，要求其严格按格式输出，最多纠偏一次
                 self.messages.append({
                     "role": "user",
@@ -98,11 +113,11 @@ class AgentLoop:
     def push_observation(self, tool_name, result):
         if self.mode == "mock" or not self.llm.available() or self.llm_down:
             return
-        self.messages.append({
-            "role": "tool",
-            "name": tool_name,
-            "content": _dump(result),
-        })
+        message = {"role": "tool", "name": tool_name, "content": _dump(result)}
+        if self._pending_call_id:
+            message["tool_call_id"] = self._pending_call_id
+            self._pending_call_id = None
+        self.messages.append(message)
 
     # ---------- 主循环 ----------
     def run(self, max_steps=None):

@@ -61,8 +61,9 @@ python run.py cli --mode builtin
 python scripts/probe_model.py     # 依次验证 /models、纯对话、function calling
 ```
 
-- 官方端点：`https://apihub.agnes-ai.com/v1`；实测可用模型：`agnes-3.0-flash`、`agnes-2.5-flash`、
+- 赛事下发端点：`https://api.agnes-ai.cn/v1`；实测可用模型：`agnes-3.0-flash`、`agnes-2.5-flash`、
   `agnes-2.5-pro-alpha`、`agnes-2.5-pro-beta`
+- 免费额度有速率限制，客户端已内置指数退避重试与请求最小间隔；仍可能触发 `429`，此时自动降级不影响闭环
 - 常见问题与处置见 `docs/AGH接入说明.md`「接入自检与排障」一节
 - **模型不可用不会中断演示**：`builtin` 模式遇到鉴权失败/网络不可达会自动降级为内置规则规划器，
   CLI 打印「降级提示」，处置闭环照常完成
@@ -102,9 +103,26 @@ python scripts/probe_model.py     # 依次验证 /models、纯对话、function 
 
 ## 五、验证记录
 
-- `python run.py cli --mode mock`：13 步执行完成，状态 `completed`，轨迹与报告落盘 `outputs/`
+- `python run.py cli --mode mock`：12 步执行完成，状态 `completed`，轨迹与报告落盘 `outputs/`
+- **真机联调（Agnes 模型驱动）**：端点 `https://api.agnes-ai.cn/v1`，模型 `agnes-3.0-flash`，
+  14 步执行完成、状态 `completed`、耗时 137s、**全程无降级**；模型自主选择了与内置脚本不同的处置顺序
+  （摄像头检出明火与 2 名在场人员后，先启动报警/广播/解锁出口疏散，再执行关阀），
+  并在远程关阀失败后自行改派机械臂；最终三路探测器回落至 2.5 / 10.0 / 0.0 ppm，机器人现场复测 0 ppm，
+  事故报告由模型自主撰写（含根因分析与 6 条整改建议）。
+  证据：`outputs/traces/task-20261013-231655.json`、`outputs/reports/report-20261013-231912.md`
 - `python run.py mcp --selftest`：MCP 协议 `initialize` / `tools/list` / `tools/call` 自检通过
 - 端到端断言：阀门关闭、排风 100%、人员疏散、源点浓度降至安全阈值以下、事故报告生成 —— 全部 PASS
+
+### 真机接入的三个工程要点（均为实测踩坑后修复）
+
+| 问题 | 现象 | 修复 |
+|---|---|---|
+| tool 消息缺 `tool_call_id` | 网关 `400 missing field tool_call_id` | 回放 `tool_calls` 时回填 `tool_call_id`（`src/agent/loop.py`） |
+| 免费额度限流 | 连续调用触发 `429` | 指数退避重试 + 请求最小间隔（`src/llm/client.py`） |
+| 浓度模型泄漏期零衰减 | 演练越长浓度越离谱（>7000 ppm） | 改为「源项 − 一阶通风稀释 − 自然沉降」，峰值有界、关阀后指数衰减（`src/world.py`） |
+
+即便模型不可用（未配 Key / 鉴权失败 / 限流持续），`builtin` 模式也会自动降级到内置规则规划器，
+处置闭环照常完成并在 CLI 打印「降级提示」，演示不会中断。
 
 ## 六、安全提示：模型 Key 的处理
 
