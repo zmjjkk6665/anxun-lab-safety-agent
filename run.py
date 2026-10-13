@@ -74,6 +74,9 @@ def cmd_cli(args):
         report_path = save_report(trace, world, os.path.join(OUT_DIR, "reports"))
 
     print("\n" + "=" * 72)
+    if loop.llm_error:
+        print("[降级提示] 模型不可用，已切回内置规则规划器完成处置：%s" % loop.llm_error)
+        print("           核对 AGNES_BASE_URL / AGNES_MODEL / 网络可达性后重试；详见 scripts/probe_model.py")
     print("状态: %s | 步数: %d | 耗时: %.1fs" % (trace.status, len(trace.steps), trace.to_dict()["elapsed_sec"]))
     print("轨迹: %s" % trace_path)
     if report_path:

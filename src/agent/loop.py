@@ -55,32 +55,48 @@ class AgentLoop:
         self.llm = AgnesClient(cfg)
         self.planner = RulePlanner(world, tools)
         self.messages = []
+        # 模型不可用（未配 Key / 鉴权失败 / 网络不可达）时自动降级，保证演示不中断
+        self.llm_down = False
+        self.llm_error = None
+
+    def _fallback(self, reason, last_result=None):
+        if not self.llm_down:
+            self.llm_down = True
+            self.llm_error = reason
+            self.world.events.append({
+                "t": round(self.world.t, 1), "type": "llm_fallback",
+                "text": "模型不可用，已自动降级为内置规则规划器：%s" % reason,
+            })
+        return self.planner.next_action(last_result)
 
     # ---------- 单步决策 ----------
     def decide(self, last_result=None):
-        if self.mode == "mock" or not self.llm.available():
+        if self.mode == "mock" or not self.llm.available() or self.llm_down:
             return self.planner.next_action(last_result)
 
-        response = self.llm.chat(self.messages, self.tools.schemas())
-        call = extract_tool_call(response)
-        msg = response["choices"][0]["message"]
-        self.messages.append({
-            "role": "assistant",
-            "content": msg.get("content") or "",
-            "tool_calls": msg.get("tool_calls"),
-        })
-        if not call.get("name"):
-            # 模型未给出工具调用，要求其严格按格式输出，最多纠偏一次
-            self.messages.append({
-                "role": "user",
-                "content": "请严格输出 JSON：{\"thought\": \"...\", \"tool\": \"工具名\", \"args\": {...}}，只调用一个工具。",
-            })
+        try:
             response = self.llm.chat(self.messages, self.tools.schemas())
             call = extract_tool_call(response)
-        return call
+            msg = response["choices"][0]["message"]
+            self.messages.append({
+                "role": "assistant",
+                "content": msg.get("content") or "",
+                "tool_calls": msg.get("tool_calls"),
+            })
+            if not call.get("name"):
+                # 模型未给出工具调用，要求其严格按格式输出，最多纠偏一次
+                self.messages.append({
+                    "role": "user",
+                    "content": "请严格输出 JSON：{\"thought\": \"...\", \"tool\": \"工具名\", \"args\": {...}}，只调用一个工具。",
+                })
+                response = self.llm.chat(self.messages, self.tools.schemas())
+                call = extract_tool_call(response)
+            return call
+        except LLMError as exc:
+            return self._fallback(str(exc), last_result)
 
     def push_observation(self, tool_name, result):
-        if self.mode == "mock" or not self.llm.available():
+        if self.mode == "mock" or not self.llm.available() or self.llm_down:
             return
         self.messages.append({
             "role": "tool",

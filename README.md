@@ -47,13 +47,25 @@ Windows 控制台如中文乱码，先执行 `chcp 65001` 或设置 `$env:PYTHON
 
 ```bash
 set AGNES_API_KEY=你的Key            # Windows PowerShell: $env:AGNES_API_KEY="..."
-set AGNES_BASE_URL=https://api.agnes.ai/v1
-set AGNES_MODEL=agnes-3.0-pro
+set AGNES_BASE_URL=https://apihub.agnes-ai.com/v1
+set AGNES_MODEL=agnes-3.0-flash
 python run.py cli --mode builtin
 ```
 
 > 若 Key 的接入地址/协议与 OpenAI 兼容格式不同，只需修改 `src/llm/client.py` 中的
 > `AgnesClient.chat()`，工具层与业务层无需改动。
+
+接入自检与排障（脚本只读取环境变量中的 Key，不回显、不落盘）：
+
+```bash
+python scripts/probe_model.py     # 依次验证 /models、纯对话、function calling
+```
+
+- 官方端点：`https://apihub.agnes-ai.com/v1`；实测可用模型：`agnes-3.0-flash`、`agnes-2.5-flash`、
+  `agnes-2.5-pro-alpha`、`agnes-2.5-pro-beta`
+- 常见问题与处置见 `docs/AGH接入说明.md`「接入自检与排障」一节
+- **模型不可用不会中断演示**：`builtin` 模式遇到鉴权失败/网络不可达会自动降级为内置规则规划器，
+  CLI 打印「降级提示」，处置闭环照常完成
 
 ## 三、项目结构
 

@@ -18,6 +18,7 @@ class RulePlanner:
         self.evacuated = False
         self.observe_count = 0
         self.confirmed = False
+        self.max_observe_rounds = 8
 
     def next_action(self, last_result=None):
         w = self.world
@@ -90,16 +91,25 @@ class RulePlanner:
 
         if self.stage == 11:
             safe = ppm <= w.thresholds["safe_ppm"]
-            if safe or self.observe_count >= 3:
+            # 只有「仍在下降」才继续等；达标或趋势停滞/反弹即收尾，避免无限等待
+            trend_down = (last_result or {}).get("trend") == "down"
+            if safe:
                 self.stage = 12
                 return self._act(
-                    "浓度已降至安全阈值以下，处置闭环，提交事故报告" if safe else "达到最大观测轮次，据实提交报告",
+                    "浓度已降至安全阈值以下，处置闭环，提交事故报告",
+                    "submit_report", self._report(ppm, safe),
+                )
+            if not trend_down or self.observe_count >= self.max_observe_rounds:
+                self.stage = 12
+                return self._act(
+                    "浓度趋势已停滞或达到最大观测轮次，据实提交报告并提示人工介入",
                     "submit_report", self._report(ppm, safe),
                 )
             self.observe_count += 1
             return self._act(
-                "当前浓度 %.1f ppm 仍高于安全线 %s ppm，继续观测" % (ppm, w.thresholds["safe_ppm"]),
-                "wait_and_observe", {"seconds": 10},
+                "当前浓度 %.1f ppm 仍高于安全线 %s ppm 且持续下降，继续观测"
+                % (ppm, w.thresholds["safe_ppm"]),
+                "wait_and_observe", {"seconds": 12},
             )
 
         return None

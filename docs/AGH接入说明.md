@@ -65,9 +65,31 @@ AGH 与内置通道共用同一份模型配置（OpenAI 兼容协议）：
 | 环境变量 | 说明 | 默认值 |
 |---|---|---|
 | `AGNES_API_KEY` | 组委会下发的模型 Key | 空 |
-| `AGNES_BASE_URL` | 模型服务地址 | `https://api.agnes.ai/v1` |
-| `AGNES_MODEL` | 模型名 | `agnes-3.0-pro` |
+| `AGNES_BASE_URL` | 模型服务地址 | `https://apihub.agnes-ai.com/v1` |
+| `AGNES_MODEL` | 模型名 | `agnes-3.0-flash` |
 | `LABGUARD_MODE` | 运行模式 | `auto` |
 | `LABGUARD_SPEED` | 仿真倍速（演示/测试用） | `2.0` |
+
+### 官方端点与模型清单（实测）
+
+- 官方 OpenAI 兼容端点：`https://apihub.agnes-ai.com/v1`（`/chat/completions`、`/models`）
+- 官方模型清单实测（2026-10）：`agnes-3.0-flash`、`agnes-2.5-flash`、`agnes-2.5-pro-alpha`、`agnes-2.5-pro-beta`
+- ⚠️ `api.agnes.ai`、`apihub.agnes.ai` 在公共 DNS 上**不存在**，不可用作 base_url
+
+### 接入自检与排障
+
+```bash
+set AGNES_API_KEY=...
+python scripts/probe_model.py          # 依次验证 /models、纯对话、function calling
+```
+
+脚本只从环境变量读取密钥，**不回显、不落盘**；输出仅含状态码与结论。常见问题：
+
+| 现象 | 原因与处理 |
+|---|---|
+| `401 Invalid token` | Key 与当前 base_url 不匹配（赛事 Key 可能走专用网关）。向赛事技术客服索取正确的**接口地址**，或换用自有第三方模型 |
+| `404 Resource not found` | base_url 写错（如 `api.agnes-ai.com`），应为 `apihub.agnes-ai.com/v1` |
+| 模型未返回 `tool_calls` | 该模型不支持 function calling，改用 `agnes-3.0-flash` |
+| 无任何 Key | 自动降级为内置规则规划器，处置闭环照常完成（CLI 会打印「降级提示」） |
 
 若组委会提供的 Key 采用私有协议，仅需改写 `src/llm/client.py::AgnesClient.chat()`。

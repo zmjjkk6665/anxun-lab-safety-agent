@@ -19,8 +19,8 @@ class AgnesClient:
     def __init__(self, cfg):
         llm = cfg["llm"]
         self.api_key = llm.get("api_key") or ""
-        self.base_url = (llm.get("base_url") or "https://api.agnes.ai/v1").rstrip("/")
-        self.model = llm.get("model") or "agnes-3.0-pro"
+        self.base_url = (llm.get("base_url") or "https://apihub.agnes-ai.com/v1").rstrip("/")
+        self.model = llm.get("model") or "agnes-3.0-flash"
         self.temperature = llm.get("temperature", 0.2)
         self.timeout = llm.get("timeout_sec", 60)
 
