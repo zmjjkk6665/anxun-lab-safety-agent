@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>安巡 · 实验室安全应急处置 Agent（Agnes Harness）</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <span class="logo">安巡</span>
+    <div>
+      <h1>实验室安全应急处置 Agent</h1>
+      <p class="sub">Powered by Agnes Harness · 数字孪生演练（无需实体硬件）</p>
+    </div>
+  </div>
+  <div class="controls">
+    <span id="clock" class="clock">T+0.0s</span>
+    <button id="btn-run" class="primary">启动应急处置</button>
+    <button id="btn-reset">重置场景</button>
+    <span id="mode-tag" class="tag">待启动</span>
+  </div>
+</header>
+
+<main>
+  <section class="panel map-panel">
+    <h2>实验室态势 <span id="lab-name" class="muted"></span></h2>
+    <svg id="map" viewBox="0 0 640 440" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <radialGradient id="leakGlow">
+          <stop offset="0%" stop-color="#ff4d4f" stop-opacity="0.75"/>
+          <stop offset="100%" stop-color="#ff4d4f" stop-opacity="0"/>
+        </radialGradient>
+        <filter id="soft"><feGaussianBlur stdDeviation="6"/></filter>
+      </defs>
+      <rect x="0" y="0" width="640" height="440" fill="#0e1626"/>
+      <g id="grid"></g>
+      <g id="zones"></g>
+      <circle id="leak" cx="0" cy="0" r="0" fill="url(#leakGlow)" filter="url(#soft)" opacity="0"/>
+      <g id="markers"></g>
+      <g id="robot"></g>
+    </svg>
+    <div class="legend">
+      <span><i class="dot ok"></i>正常</span>
+      <span><i class="dot warn"></i>预警</span>
+      <span><i class="dot alarm"></i>报警</span>
+      <span><i class="dot danger"></i>危险</span>
+      <span><i class="dot fault"></i>故障</span>
+    </div>
+  </section>
+
+  <section class="panel side">
+    <h2>关键指标</h2>
+    <div class="kpis">
+      <div class="kpi"><label>源点浓度</label><b id="kpi-ppm">0.0</b><span>ppm</span></div>
+      <div class="kpi"><label>排风档位</label><b id="kpi-vent">0</b><span>%</span></div>
+      <div class="kpi"><label>阀门状态</label><b id="kpi-valve">开</b><span></span></div>
+      <div class="kpi"><label>现场人员</label><b id="kpi-people">0</b><span>人</span></div>
+    </div>
+    <h3>探测器</h3>
+    <div id="sensors" class="sensors"></div>
+    <h3>设备状态</h3>
+    <div id="devices" class="devices"></div>
+  </section>
+
+  <section class="panel trace-panel">
+    <h2>Agent 执行轨迹 <span class="muted">（对齐 AGH Trace 视图：思考 / 工具 / 入参 / 结果 / 耗时）</span></h2>
+    <div id="trace" class="trace"></div>
+  </section>
+
+  <section class="panel report-panel">
+    <h2>事故处置报告</h2>
+    <div id="report" class="report muted">尚未生成，等待处置闭环。</div>
+  </section>
+</main>
+
+<script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+__pycache__/
+*.py[cod]
+dist/
+outputs/
+.env
+*.log
+.idea/
+.vscode/
+
+# Agnes Harness 源码目录：由使用者自行克隆到本地并配置 AGH_HOME，不随本仓库提交
+agnes-harness/

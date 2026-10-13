@@ -1,0 +1,5 @@
+# 本项目核心功能仅依赖 Python 3.8+ 标准库，无需 pip install 即可运行。
+# 以下为可选依赖，仅在二次开发/扩展时按需安装：
+# requests>=2.28.0      # 若偏好用 requests 替代 urllib 调用模型服务
+# mcp>=1.0.0            # 若使用官方 MCP SDK 替代内置 stdio 服务器
+# pytest>=7.0.0         # 若用 pytest 替代内置 unittest 跑测试

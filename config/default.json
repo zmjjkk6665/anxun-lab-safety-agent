@@ -1,0 +1,36 @@
+{
+  "lab": {
+    "name": "有机合成实验室 B203",
+    "chemical": "乙炔",
+    "leak_start_sec": 4.0,
+    "sim_speed": 2.0
+  },
+  "thresholds": {
+    "warn_ppm": 200.0,
+    "alarm_ppm": 500.0,
+    "danger_ppm": 1000.0,
+    "safe_ppm": 50.0
+  },
+  "llm": {
+    "provider": "agnes",
+    "base_url": "https://api.agnes.ai/v1",
+    "model": "agnes-3.0-pro",
+    "api_key": "",
+    "temperature": 0.2,
+    "timeout_sec": 60
+  },
+  "agh": {
+    "home": "",
+    "server_url": "",
+    "cli": "agh"
+  },
+  "agent": {
+    "mode": "auto",
+    "max_steps": 40,
+    "step_timeout_sec": 120
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8787
+  }
+}
