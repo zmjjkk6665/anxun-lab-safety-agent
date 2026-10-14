@@ -36,7 +36,7 @@ const VALUES = () => ({
   links: [
     'https://github.com/zmjjkk6665/anxun-lab-safety-agent',
     'https://github.com/zmjjkk6665/anxun-lab-safety-agent/blob/main/media/demo-anxun-lab-safety.mp4',
-    'https://raw.githubusercontent.com/zmjjkk6665/anxun-lab-safety-agent/main/media/demo-anxun-lab-safety.mp4',
+    'https://github.com/zmjjkk6665/anxun-lab-safety-agent/tree/main/media',
   ].join(' ｜ '),
   zip: path.join(ROOT, 'dist', '本科生组-U126-大肥鱼脚香香-李家杰.zip'),
 });
@@ -150,6 +150,18 @@ async function markFields(page) {
   console.log('已截图', path.relative(ROOT, shot));
 
   if (mode === 'submit') {
+    // 记录提交接口的真实 HTTP 状态与响应体，作为提交成功的硬证据
+    const captures = [];
+    page.on('response', async (resp) => {
+      const req = resp.request();
+      if (req.method() !== 'POST') return;
+      const url = resp.url();
+      if (!/submit|work|hackathon|upload/i.test(url)) return;
+      let body = '';
+      try { body = (await resp.text()).slice(0, 500); } catch (e) { body = '(无法读取)'; }
+      captures.push({ url, status: resp.status(), body });
+    });
+
     await page.locator('button:has-text("提交作品")').last().click({ timeout: 15000 });
     await wait(6000);
     const text = await page.evaluate(() => document.body.innerText);
@@ -157,6 +169,10 @@ async function markFields(page) {
     await page.screenshot({ path: path.join(OUT, 'form-after-submit.png'), fullPage: false });
     const hint = text.split('\n').filter((l) => /成功|已提交|失败|错误|请|锁/.test(l)).slice(0, 8).join(' / ');
     console.log('提交后提示:', hint || '(未捕获提示，见 submit-result.txt)');
+    fs.writeFileSync(path.join(OUT, 'submit-response.json'), JSON.stringify(captures, null, 2), 'utf-8');
+    console.log('接口响应记录:', captures.length);
+    captures.forEach((c) => console.log(`  POST ${c.status} ${c.url.slice(0, 90)} -> ${c.body.replace(/\s+/g, ' ').slice(0, 200)}`));
+    console.log('弹窗是否关闭(提交成功标志):', !(await page.evaluate(() => !!document.querySelector('[data-fill-idx="0"]'))));
   }
 
   await wait(6000);
