@@ -154,6 +154,23 @@ async function main() {
     await page.waitForTimeout(800);
   }
 
+  // ---- 复盘段：赛事要求成片 3–5 分钟，顺便把可追溯证据讲清楚 ----
+  const REVIEW = [
+    ['report', '复盘 · 事故报告', '报告由模型自主撰写：处置结论、根因分析、动作时序与整改建议，不是模板填充。'],
+    ['trace', '复盘 · 执行轨迹', '每一步的思考、工具、入参、返回值与耗时都在 Trace 里，可逐步回放、可审计。'],
+    ['trace', '复盘 · 关键转折', '远程关阀因执行器无响应失败后，模型自行改派机械臂 ARM-01 就地手动关阀。'],
+    ['devices', '复盘 · 运行时可替换', '同一套工具注册表经 MCP 交给 AGH 驱动，切换 Harness 时业务代码零改动。'],
+  ];
+  for (const [anchor, phase, line] of REVIEW) {
+    await setCaption(phase, line, '共 ' + shownSteps + ' 步　|　最终状态 ' + finalStatus);
+    await page.evaluate((id) => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, anchor);
+    await page.waitForTimeout(21000);
+  }
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
   // ---- 结尾 ----
   await setCaption(
     finalStatus === 'completed' ? '处置闭环' : '演练结束（' + finalStatus + '）',

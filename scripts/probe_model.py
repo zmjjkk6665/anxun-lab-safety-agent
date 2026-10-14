@@ -32,7 +32,7 @@ def request(url, payload=None, key=None, timeout=30, method=None):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--base", default=os.environ.get("AGNES_BASE_URL", "https://apihub.agnes-ai.com/v1"))
+    ap.add_argument("--base", default=os.environ.get("AGNES_BASE_URL", "https://api.agnes-ai.cn/v1"))
     ap.add_argument("--model", default=os.environ.get("AGNES_MODEL", "agnes-3.0-flash"))
     a = ap.parse_args()
 
