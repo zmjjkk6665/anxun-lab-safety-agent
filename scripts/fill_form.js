@@ -35,9 +35,8 @@ const VALUES = () => ({
   // 单行 input（max 500），换行会被丢弃；且前端校验要求以 http(s):// 开头，因此只能放纯 URL，用 ｜ 分隔
   links: [
     'https://github.com/zmjjkk6665/anxun-lab-safety-agent',
-    'http://127.0.0.1:8787',
-    'https://github.com/zmjjkk6665/anxun-lab-safety-agent/blob/main/media/演示视频-安巡-实验室安全应急处置.mp4',
-    'https://raw.githubusercontent.com/zmjjkk6665/anxun-lab-safety-agent/main/media/演示视频-安巡-实验室安全应急处置.mp4',
+    'https://github.com/zmjjkk6665/anxun-lab-safety-agent/blob/main/media/demo-anxun-lab-safety.mp4',
+    'https://raw.githubusercontent.com/zmjjkk6665/anxun-lab-safety-agent/main/media/demo-anxun-lab-safety.mp4',
   ].join(' ｜ '),
   zip: path.join(ROOT, 'dist', '本科生组-U126-大肥鱼脚香香-李家杰.zip'),
 });

@@ -7,7 +7,7 @@
  *   node scripts/record_demo.js --mode mock      # 离线模式（快、稳定）
  *   node scripts/record_demo.js --seconds 60     # 最长录制时长
  *
- * 输出：outputs/video/演示视频-安巡-实验室安全应急处置.webm
+ * 输出：outputs/video/demo-anxun-lab-safety.webm
  * 说明：视频内叠加中文字幕条与片头，无需配音即可看懂；全程不显示任何模型 Key。
  */
 
@@ -192,7 +192,7 @@ async function main() {
     console.error('未生成视频文件');
     process.exit(3);
   }
-  const out = path.join(VIDEO_DIR, '演示视频-安巡-实验室安全应急处置.webm');
+  const out = path.join(VIDEO_DIR, 'demo-anxun-lab-safety.webm');
   fs.copyFileSync(path.join(VIDEO_DIR, files[0].f), out);
   fs.unlinkSync(path.join(VIDEO_DIR, files[0].f));
   const kb = (fs.statSync(out).size / 1024).toFixed(0);
